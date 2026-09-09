@@ -3,14 +3,14 @@ Here I keep track of all the tuning and run on the transformer architecture.
 
 Experiments planned: 
 
-| Exp | Corpus | Context | d_model | Heads | Blocks | Val loss | Rhyme |
-| --- | ------ | ------: | ------: | ----: | -----: | -------: | ----- |
-| 0   | raw    |      64 |     128 |     4 |      1 |     1.81 | poor  |
-| 1   | clean  |      64 |     128 |     4 |      1 |     1.84 | poor  |
-| 2   | clean  |     128 |     128 |     4 |      1 |     1.89 | poor  |
-| 3   | clean  |     256 |     128 |     4 |      1 |     1.99 | poor  |
-| 4   | clean  |     128 |     384 |     4 |      1 |     1.60 | poor  |
-| 5   | clean  |     128 |     384 |     4 |      2 |        ? | ?     |
+| Exp | Corpus | Context | d_model | Heads | Blocks | Val loss | 
+| --- | ------ | ------: | ------: | ----: | -----: | -------: | 
+| 0   | raw    |      64 |     128 |     4 |      1 |     1.81 | 
+| 1   | clean  |      64 |     128 |     4 |      1 |     1.84 | 
+| 2   | clean  |     128 |     128 |     4 |      1 |     1.89 | 
+| 3   | clean  |     256 |     128 |     4 |      1 |     1.99 | 
+| 4   | clean  |     128 |     384 |     4 |      1 |     1.60 | 
+| 5   | clean  |     128 |     384 |     4 |      2 |     1.52 | 
 
 
 
@@ -74,7 +74,7 @@ Final validation loss ≈ 1.84
 - d_model = 384
 - n_heads = 4
 - d_head = 32
-- d_ff = 512
+- d_ff = 1536
 - n_blocks = 1
 - steps = 3000
 
@@ -90,10 +90,10 @@ Final validation loss ≈ 1.60
 - d_model = 384
 - n_heads = 4
 - d_head = 32
-- d_ff = 512
+- d_ff = 1536
 - n_blocks = 2
 - steps = 3000
 
-Final validation loss ≈ 1.60
+Final validation loss ≈ 1.52
 
-**Outcome:** poor grammar/rhyme, best performance achieved so far but training takes considerable time. Tensorboard added.
+**Outcome:** poor grammar/rhyme, best performance achieved so far but training takes considerable time. 
