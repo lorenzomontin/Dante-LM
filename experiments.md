@@ -32,8 +32,6 @@ Final validation loss ≈ 1.81
 **Outcome:** qualitatively Dante-like, but poor grammar/rhyme,contains unwanted numerals/artifacts. 
 
 
-
-
 ## Experiment 2 — larger context window
 
 - Character-level
@@ -97,3 +95,25 @@ Final validation loss ≈ 1.60
 Final validation loss ≈ 1.52
 
 **Outcome:** poor grammar/rhyme, best performance achieved so far but training takes considerable time. 
+
+
+
+---
+
+## GePpeTto fine-tuning tracking  
+
+### Experiment 0 - baseline (no LoRA)
+
+- BPE tokenization (GePpeTto GPT-2 tokenizer, vocab = 30000)
+- block_size = 128
+- batch_size = 4
+- learning_rate = 5e-5
+- max_steps = 100
+
+Final test loss ~ 5.90
+Final test perplexity ~ 367.60
+
+**Outcome:** Baseline, no rhymes and gibberish Italian: 
+Nel mezzo del cammin di nostra vita
+ di, chel nonò'r, mète ',
+'' di' suor e' a' suoi'
