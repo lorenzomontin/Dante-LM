@@ -1,4 +1,4 @@
-# Dante- LM
+x# Dante- LM
 
 A hands-on exploration of language modeling through Dante Alighieri's *Divine Comedy*. The project uses the poem, considered one of the greatest works of Western literature and the foundation of the modern Italian language, as a fixed testbed for building, training, and comparing increasingly capable neural netowork architectures.
 
