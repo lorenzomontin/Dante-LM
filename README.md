@@ -6,7 +6,7 @@ Just as the poem follows a journey from Hell to Paradise, this repo tracks a per
 
 
 
-![alt text](image.png) 
+<img width="1600" height="1096" alt="Image" src="https://github.com/user-attachments/assets/a44eca2a-f21b-4acc-a8df-2047ca0e7b42" />
 
 
 ## Model explored and tested:
