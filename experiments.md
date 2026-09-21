@@ -8,16 +8,16 @@ Log of the Dante LM experiments: a character-level transformer trained from scra
  
 **Common setup:** clean corpus (canto headers and titles stripped, 551,846 → 534,889 characters), vocab = 67, n_heads = 4, d_head = d_model / 4, d_ff = 4 × d_model, AdamW, single seed. Batch size and learning rate were not recorded for runs 1–4. Runs 5–8 come from `trf_v2.ipynb` (`nn.MultiheadAttention`, built for Colab). Losses are per character, at the last step.
  
-| Run | Old # | Context | d_model | Blocks | LR | Steps | Batch | Train | Val |
-| --- | ----: | ------: | ------: | -----: | -: | ----: | ----: | ----: | --: |
-| 1   | 1     |      64 |     128 |      1 | –    | 3000 | – | –    | 1.84 |
-| 2   | 2     |     128 |     128 |      1 | –    | 3000 | – | –    | 1.89 |
-| 3   | 3     |     256 |     128 |      1 | –    | 3000 | – | –    | 1.99 |
-| 4   | 4     |     128 |     384 |      1 | –    | 3000 | – | –    | 1.60 |
-| 5   | 6     |     128 |     384 |      2 | 3e-4 | 3000 | 64 | 1.34 | 1.49 |
-| 6   | 7     |     128 |     384 |      5 | 3e-4 | 3000 | 64 | 0.92 | 1.73 |
-| 7   | 9     |     128 |     384 |      3 | 1e-4 | 3000 | 64 | 1.54 | 1.57 |
-| 8   | 11    |     512 |     384 |      3 | 1e-4 | 5000 | 64 | 1.45 | 1.51 |
+| Run | Context | d_model | Blocks | LR | Steps | Batch | Train | Val |
+| --- | ---: | ------: | -----: | -: | ----: | ----: | ----: | --: |
+| 1   |   64 |     128 |      1 | –    | 3000 | – | –    | 1.84 |
+| 2   |  128 |     128 |      1 | –    | 3000 | – | –    | 1.89 |
+| 3   |  256 |     128 |      1 | –    | 3000 | – | –    | 1.99 |
+| 4   |  128 |     384 |      1 | –    | 3000 | – | –    | 1.60 |
+| 5   |  128 |     384 |      2 | 3e-4 | 3000 | 64 | 1.34 | 1.49 |
+| 6   |  128 |     384 |      5 | 3e-4 | 3000 | 64 | 0.92 | 1.73 |
+| 7   |  128 |     384 |      3 | 1e-4 | 3000 | 64 | 1.54 | 1.57 |
+| 8   |  512 |     384 |      3 | 1e-4 | 5000 | 64 | 1.45 | 1.51 |
  
 ### Findings
  
