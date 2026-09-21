@@ -28,8 +28,7 @@ Log of the Dante LM experiments: a character-level transformer trained from scra
 - **Overall:** best val loss sits around 1.5 across quite different configurations. Samples are Dante-like in style and line layout, but ungrammatical and unrhymed.
 Run 5 has the same config as an earlier hand-written-attention run (batch 32, val 1.52 at step 2700). The difference is too small to attribute to the implementation, since batch size and final step also differ.
  
-**Not listed:** raw-corpus baseline (old Exp 0, val 1.81, not comparable: vocab 69, headers with numerals); hand-written 2-block run (old Exp 5, see above); context 256 with 3 blocks (old Exp 8, train 1.19 / val 1.51, changed blocks and context together); context 512 at 3000 steps (old Exp 10, folded into run 8).
- 
+
 ### Samples
  
 Run 5 (2 blocks):
@@ -55,19 +54,20 @@ lume da lor, per leggel due a frelle,
  
 ## 2. GePpeTto fine-tuning
  
-**Common setup:** GePpeTto (Italian GPT-2, ~109M params), BPE vocab = 30000, same cleaned text and 90/5/5 sequential train/val/test split, block_size = 128, AdamW. Losses are per BPE token (perplexity = exp(loss)), so they are not comparable with the per-character losses above.
+**Common setup:** GePpeTto (Italian GPT-2, ~109M params), BPE vocab = 30000, same cleaned text and 90/5/5 sequential train/val/test split (val and test are the last 10% of the text), block_size = 128, AdamW, seed 42. Losses are per BPE token (perplexity = exp(loss)), so they are not comparable with the per-character losses above. Val and test losses are computed over the full split in non-overlapping 128-token windows, so they are deterministic. The train loss printed during training is a random-batch estimate.
  
 | Run | Method | Trainable params | LR | Batch | Steps | Tokens seen | Val loss | Test loss (ppl) |
 | --- | ------ | ---------------: | -: | ----: | ----: | ----------: | -------: | --------------: |
-| Zero-shot | none | 0 | – | 4 | – | – | 6.32 | – |
-| Full fine-tune | all weights | ~108.9M | 5e-5 | 4 | 100 | ~51k | 4.20 | 4.20 (66.4) |
-| LoRA | r = 8, α = 16, dropout 0.05, `c_attn` | 294,912 (0.27%) | 2e-4 | 8 | 1000 | ~1.02M | 4.14 | not computed yet |
+| Zero-shot | none | 0 | – | – | – | – | 6.30 | 6.31 (552.6) |
+| Full fine-tune | all weights | ~108.9M | 5e-5 | 4 | 100 | ~51k | 4.17 | 4.19 (66.0) |
+| LoRA | r = 8, α = 16, dropout 0.05, `c_attn` | 294,912 (0.27%) | 2e-4 | 8 | 1000 | ~1.02M | 4.15 | 4.13 (61.9) |
  
 Val loss is the last logged value (step 90 and step 900).
- 
+
 ### Findings
  
-- **Zero-shot:** fluent modern Italian, no Dante. After "Nel mezzo del cammin di nostra vita" the top next token is "," (p ≈ 0.34), and sampled continuations drift into contemporary prose.
-- **Full fine-tune:** coherent Italian with archaic Dante-like forms ('l, ne la, 'ntesi), but repetitive ("mente", "mondo" recur constantly) and no terza rima. The val estimate is noisy (4.19–4.28 over steps 40–90, from only 10 batches of 4).
-- **LoRA:** the untrained adapter reproduces the base model's loss (train 6.12 / val 6.32), as expected. Val falls from 4.50 (step 100) to 4.14 (step 900) and is still decreasing. Qualitatively similar to the full fine-tune on 3 prompts (archaic lexicon, dialogue quotes) with the same repetition, a stray non-Latin character in one sample, irregular line lengths and no consistent rhyme scheme.
-- **Caveat:** LoRA's val 4.14 vs 4.20 is not a like-for-like win. It saw ~20× more tokens with a different batch size and learning rate. LoRA test metrics are not computed yet.
+- **Zero-shot:** fluent modern Italian, no Dante. After "Nel mezzo del cammin di nostra vita" the top next token is "," (p ≈ 0.34), and sampled continuations drift into contemporary prose (Roman history, in the sample). One stray Arabic-script character already appears in this zero-shot sample.
+- **Full fine-tune:** val falls smoothly from 5.24 (step 0) to 4.17 (step 90), with train at 4.08. Coherent Italian with archaic Dante-like forms (*sanza*, *'l*, *Ed elli a me*), but repetitive ("non vedi" recurs constantly) and no terza rima.
+- **LoRA:** the untrained adapter reproduces the zero-shot val loss exactly (6.3006), as expected. Val falls from 4.51 (step 100) to 4.15 (step 900) and is nearly flat over the last 200 steps (4.149 at step 800, 4.147 at step 900), with train at 4.08. Qualitatively similar to the full fine-tune on 3 prompts (archaic lexicon, dialogue quotes) with the same repetition ("di più che di più che di più"), a stray non-Latin character in one sample (the base model produces it too), irregular line lengths and no consistent rhyme scheme.
+- **Caveat:** LoRA's test loss is lower than the full fine-tune's (4.13 vs 4.19), but this is not a like-for-like comparison. LoRA saw ~20× more tokens, with a different batch size and learning rate.
+

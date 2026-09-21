@@ -13,45 +13,44 @@ Just as the poem follows a journey from Hell to Paradise, this repo tracks a per
  
 The main achievement so far is [GePpeTto](https://huggingface.co/LorenzoDeMattei/GePpeTto) (an Italian GPT-2, ~109M parameters) fine-tuned with LoRA. It reaches the lowest validation loss of the runs below while training 0.27% of the weights, and it picks up Dante's vocabulary, archaic spellings and line layout. It does not write terza rima yet, and it has not been compared with full fine-tuning at the same training budget.
  
-| Model | Trainable params | Val loss | Val perplexity |
+| Model | Trainable params | Val loss | Test loss (perplexity) |
 |---|---:|---:|---:|
-| GePpeTto, zero-shot | 0 | 6.32 | ~554 |
-| GePpeTto, full fine-tune (100 steps, batch 4, lr 5e-5) | ~109M | 4.20 | ~67 |
-| GePpeTto + LoRA (r=8, α=16, `c_attn`; 1000 steps, batch 8, lr 2e-4) | 294,912 (0.27%) | 4.14 | ~63 |
- 
-Losses are per BPE token, at the last logged step. The full fine-tune also has a test loss of 4.20 (perplexity 66.4). 
+| GePpeTto, zero-shot | 0 | 6.30 | 6.31 (553) |
+| GePpeTto, full fine-tune (100 steps, batch 4, lr 5e-5) | ~109M | 4.17 | 4.19 (66.0) |
+| GePpeTto + LoRA (r=8, α=16, `c_attn`; 1000 steps, batch 8, lr 2e-4) | 294,912 (0.27%) | 4.15 | 4.13 (61.9) |
+
+Losses are per BPE token. Val is the last logged value (step 90 and step 900). Val and test are scored over the full split in non-overlapping 128-token windows.
 
 The best from-scratch character-level transformer (2 blocks, d_model 384, context 128) reaches a validation loss of 1.49 per character. The word-level MLP baseline reaches 6.31 per word (vocabulary of 12,002 words, different split). Per-character, per-word and per-token losses are not directly comparable.
  
 A LoRA sample (prompt in the first line, temperature 0.8, top-k 50):
- 
 ```
 Amor che ne la mente mi ragiona
-come li occhi tuoi e ne lo cielo,
-  e tu 'l mio volto, che ti si volge,
-m'ha, e ti rimembra, e tu, nel cuore,
-non mi sentirai
-che 'l men, e di nuovo 'l padre mi chiami".
-  "Oimè, a me: qual fu l'ultimo
-dammi, come tu mi vorresti
+che la testa, come d'un piè del tutto la memoria,
+e quella, che non mi pare, che li occhi più savi.
+  E io che son stato io a fare la terra,
+e che 'nna veggo che 'l mondo è stato,
+con la morte a colui ch'è morto;
+  perché è suo, se non lo è stato, il nome che si vede
+più che altro a coloro che mi son venuti.
 ```
 
 
 ## Main findings
-
+ 
 - Zero-shot GePpeTto writes fluent modern Italian and nothing like Dante.
-- Full fine-tuning and LoRA both bring validation perplexity down to the 60s and produce Dante-like vocabulary (*'l*, *ne la*, *sanza*), but the outputs are repetitive and the lines do not rhyme. Full fine-tuning ran 100 steps and LoRA 1000, so the two numbers do not yet compare the methods fairly.
-- With LoRA the adapter is about 1 MB, and validation loss was still falling at the end of the run.
+- Full fine-tuning and LoRA both bring test perplexity down from ~553 to 66 and 62, and produce Dante-like vocabulary (*'l*, *ne la*, *sanza*), but the outputs are repetitive and the lines do not rhyme. Full fine-tuning ran 100 steps and LoRA 1000, so the two numbers do not yet compare the methods fairly.
+- With LoRA the adapter is about 1 MB, and validation loss was nearly flat over the last 200 of the 1000 steps.
 - In the from-scratch transformer, a wider model (d_model 128 → 384) helped the most, a longer context did not help, and five blocks overfit. The full log is in [`experiments.md`](experiments.md).
 
 
 
 ## Limitations
  
-- Each number comes from a single run without a fixed seed, and the losses are estimated on a few random windows.
-- The transformer and GPT notebooks split the text by position (90/5/5), so validation and test come from the last part of the Paradiso (final part of the poem, with different tone). The MLP uses a different tokenization (words) and a split by whole cantos, so its loss is not comparable with theirs.
+- Each number comes from a single run. The GePpeTto runs use a fixed seed (42); the character-level runs do not.
+- The transformer and GPT notebooks split the text by position (90/5/5), so validation and test come from the last part of the Paradiso. The MLP uses a different tokenization (words) and a split by whole cantos, so its loss is not comparable with theirs.
 - The sample prompts are lines from the training text.
-- The LoRA test loss has not been computed yet.
+
 
 
 ## Model explored and tested:
@@ -118,7 +117,7 @@ print(tokenizer.decode(out[0], skip_special_tokens=True))
 ## Next steps
  
 - A rhyme metric (share of tercets whose first and third lines rhyme) for the real text and each model, so rhyme is measured and not judged by eye.
-- Evaluate every model on the full validation and test sets, and compare full fine-tuning and LoRA with the same training budget.
+- Compare full fine-tuning and LoRA with the same training budget.
 - RNN and LSTM baselines.
 
 
