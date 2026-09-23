@@ -1,0 +1,5 @@
+,val,val,val,val,test,test,test,test
+,mean,std,min,max,mean,std,min,max
+name,,,,,,,,
+full_ft_lr5e-5,3.9865,0.0114,3.9773,3.9992,3.9755,0.0039,3.9713,3.9788
+lora_r8_all_linear,3.9572,0.0104,3.9487,3.9688,3.9577,0.009,3.9508,3.9678

@@ -1,6 +1,6 @@
 # Experiments
  
-Log of the Dante LM experiments: a character-level transformer trained from scratch (`trf.ipynb`, `trf_v2.ipynb`) and a fine-tuned Italian GPT-2 (GePpeTto, `GPT.ipynb`). Only the runs that changed a conclusion are kept.
+Log of the Dante LM experiments: a character-level transformer trained from scratch (`trf.ipynb`, `trf_v2.ipynb`) and a fine-tuned Italian GPT-2 (GePpeTto, `GPT.ipynb`, `ablation/lora_ablation.ipynb`). Only the runs that changed a conclusion are kept.
  
 ---
  
@@ -56,18 +56,45 @@ lume da lor, per leggel due a frelle,
  
 **Common setup:** GePpeTto (Italian GPT-2, ~109M params), BPE vocab = 30000, same cleaned text and 90/5/5 sequential train/val/test split (val and test are the last 10% of the text), block_size = 128, AdamW, seed 42. Losses are per BPE token (perplexity = exp(loss)), so they are not comparable with the per-character losses above. Val and test losses are computed over the full split in non-overlapping 128-token windows, so they are deterministic. The train loss printed during training is a random-batch estimate.
  
-| Run | Method | Trainable params | LR | Batch | Steps | Tokens seen | Val loss | Test loss (ppl) |
-| --- | ------ | ---------------: | -: | ----: | ----: | ----------: | -------: | --------------: |
-| Zero-shot | none | 0 | – | – | – | – | 6.30 | 6.31 (552.6) |
-| Full fine-tune | all weights | ~108.9M | 5e-5 | 4 | 100 | ~51k | 4.17 | 4.19 (66.0) |
-| LoRA | r = 8, α = 16, dropout 0.05, `c_attn` | 294,912 (0.27%) | 2e-4 | 8 | 1000 | ~1.02M | 4.15 | 4.13 (61.9) |
- 
-Val loss is the last logged value (step 90 and step 900).
+| Run | Method | Trainable params | LR | Batch | Steps | Val loss | Test loss (ppl) |
+| --- | ------ | ---------------: | -: | ----: | ----: | -------: | --------------: |
+| Zero-shot | none | 0 | – | – | – | 6.30 | 6.31 (552.6) |
+| Full fine-tune (`GPT.ipynb`) | all weights | ~108.9M | 5e-5 | 4 | 100 | 4.17 | 4.19 (66.0) |
+| LoRA (`GPT.ipynb`) | r=8, α=16, `c_attn` | 294,912 (0.27%) | 2e-4 | 8 | 1000 | 4.15 | 4.13 (61.9) |
 
-### Findings
+
+### 2.1 LoRA ablation (`ablation/lora_ablation.ipynb`, seed 42, single run each)
+ 
+One-factor-at-a-time from the reference config (r=8, `c_attn`, lr 2e-4, batch 8, 1000 steps). Full fine-tune re-run at 500 steps (see 2.2 for why).
+ 
+| Run | Method | Targets | Rank | LR | Steps | Trainable | Val loss (ppl) |
+| --- | ------ | ------- | ---: | -: | ----: | --------: | --------------: |
+| lora_r8_ref | LoRA | `c_attn` | 8 | 2e-4 | 1000 | 294,912 (0.27%) | 4.14 (62.6) |
+| lora_r4 | LoRA | `c_attn` | 4 | 2e-4 | 1000 | 147,456 (0.14%) | 4.17 (64.7) |
+| lora_r16 | LoRA | `c_attn` | 16 | 2e-4 | 1000 | 589,824 (0.54%) | 4.09 (59.6) |
+| lora_r8_all_linear | LoRA | `c_attn`+`c_proj`+`c_fc` | 8 | 2e-4 | 1000 | 1,179,648 (1.07%) | 3.95 (51.9) |
+| lora_r8_lr1e-4 | LoRA | `c_attn` | 8 | 1e-4 | 1000 | 294,912 (0.27%) | 4.20 (66.5) |
+| lora_r8_lr5e-4 | LoRA | `c_attn` | 8 | 5e-4 | 1000 | 294,912 (0.27%) | 4.06 (57.7) |
+| full_ft_lr5e-5 | full | all weights | – | 5e-5 | 500 | 108,882,432 (100%) | 4.00 (54.7), best at step 300–450, see 2.2 |
+ 
+**Findings:** target modules matter most (extending from `c_attn` alone to all three linear layers: 4.14 → 3.95, the single largest change); rank has a small, monotonic effect (r=4 → 8 → 16: 4.17 → 4.14 → 4.09); learning rate is also monotonic in this range (1e-4 → 2e-4 → 5e-4: 4.20 → 4.14 → 4.06, not yet showing instability). `lora_r8_all_linear` is the best single-seed config and was taken forward to the matched comparison below.
+
+
+### 2.2 Full fine-tune overfits quickly; matched comparison (3 seeds each)
+ 
+The full fine-tune's train loss falls monotonically to 2.33 at step 1000 while its val loss bottoms out around step 300–450 (~3.94–3.95) and then rises again (4.37 by step 1000) — classic overfitting on a ~156k-token train split. Reporting its step-1000 val loss (as in the original `GPT.ipynb` run and the first ablation pass) understates it. It was re-run at 500 steps with `eval_interval=50` to catch the actual best point, and both it and the best LoRA config (`lora_r8_all_linear`) were then run on 3 seeds (1, 2, 3):
+ 
+| Config | Val loss (mean ± std) | Test loss (mean ± std) | Wall time |
+| --- | ---: | ---: | ---: |
+| Full fine-tune, 500 steps, best-val | 3.987 ± 0.011 | 3.976 ± 0.004 | 2.40 min |
+| LoRA r=8, all-linear, 1000 steps | 3.957 ± 0.010 | 3.958 ± 0.009 | 3.56 min |
+ 
+**Finding:** at matched best-val, LoRA and full fine-tuning are statistically indistinguishable (Δ≈0.03, smaller than either method's own run-to-run std of ~0.01). LoRA reaches this training 1.08% of the parameters, at no risk of the overfitting seen in the unconstrained full fine-tune. The original headline gap (LoRA 4.13 vs full fine-tune 4.19 test loss) was mostly an artifact of comparing 1000 LoRA steps against an under-trained 100-step full fine-tune, and the reverse gap seen with a fixed step-1000 comparison (this section) was an artifact of the full fine-tune's overfitting, not evaluated with early stopping.
+ 
+### Qualitative findings (all runs)
  
 - **Zero-shot:** fluent modern Italian, no Dante. After "Nel mezzo del cammin di nostra vita" the top next token is "," (p ≈ 0.34), and sampled continuations drift into contemporary prose (Roman history, in the sample). One stray Arabic-script character already appears in this zero-shot sample.
-- **Full fine-tune:** val falls smoothly from 5.24 (step 0) to 4.17 (step 90), with train at 4.08. Coherent Italian with archaic Dante-like forms (*sanza*, *'l*, *Ed elli a me*), but repetitive ("non vedi" recurs constantly) and no terza rima.
-- **LoRA:** the untrained adapter reproduces the zero-shot val loss exactly (6.3006), as expected. Val falls from 4.51 (step 100) to 4.15 (step 900) and is nearly flat over the last 200 steps (4.149 at step 800, 4.147 at step 900), with train at 4.08. Qualitatively similar to the full fine-tune on 3 prompts (archaic lexicon, dialogue quotes) with the same repetition ("di più che di più che di più"), a stray non-Latin character in one sample (the base model produces it too), irregular line lengths and no consistent rhyme scheme.
-- **Caveat:** LoRA's test loss is lower than the full fine-tune's (4.13 vs 4.19), but this is not a like-for-like comparison. LoRA saw ~20× more tokens, with a different batch size and learning rate.
+- **Full fine-tune and LoRA (`c_attn` only, `GPT.ipynb`):** coherent Italian with archaic Dante-like forms (*sanza*, *'l*, *ne la*, *Ed elli a me*), but repetitive ("non vedi" / "di più che di più che di più" recur) and no terza rima. A stray non-Latin character appears in one LoRA sample, but the base model produces it too.
+- **LoRA, all-linear (best config, local re-run, seed 1, val 3.955 at step 1000):** clearly the most fluent and Dante-like output of any run. Correct terzina indentation, consistent archaic register (*sanza*, *'l*, *etterna*, *rispuose*), in-character dialogue tags ("io: '...'", "disse, '...'"), and grammatically well-formed Italian sentences throughout both samples: a step up from the repetitive, less coherent output of the `c_attn`-only run. Still no consistent end rhyme and it does not follow the ABA BCB terza rima scheme.
+
 
