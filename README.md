@@ -62,7 +62,7 @@ che te ne fai sì per te men che tu ti senta".
 
 | Model | Status | Notes |
 |---|---|---|
-| MLP (character/word-level, with BatchNorm) | Done | Implemented without `nn.Module` classes, to see the internal mechanics directly |
+| MLP (word-level, with BatchNorm) | Done | Implemented without `nn.Module` classes, to see the internal mechanics directly |
 | Transformer (from scratch, character-level) | Done | Custom attention, multi-head, residual + LayerNorm blocks |
 | GPT fine-tuning ([GePpeTto](https://huggingface.co/LorenzoDeMattei/GePpeTto)) | Done (rhyme still open) | Full fine-tuning and LoRA of an Italian pretrained GPT-2 on the *Commedia*, plus a LoRA ablation |
 | RNN | Planned | — |
